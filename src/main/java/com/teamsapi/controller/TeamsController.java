@@ -42,6 +42,10 @@ public class TeamsController {
     public String summarizeReplies(@RequestParam String teamId, @RequestParam String channelId, @RequestParam String messageId) throws JsonProcessingException {
         return this.teamService.summarizeReplies(teamId, channelId, messageId);
     }
+    @GetMapping("/summarizeMessageLink")
+    public String summarizeMessageLink(@RequestParam String messageLink) throws JsonProcessingException {
+        return this.teamService.summarizeByMessageLink(messageLink);
+    }
 
 
 }

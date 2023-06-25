@@ -156,7 +156,16 @@ public class TeamsService {
     }
 
     public String summarizeReplies(String teamId, String channelId, String messageId) throws JsonProcessingException {
-        return this.chatGptService.answerToPromptOfChatGpt(concatenateReplies(teamId, channelId, messageId));
+        String question=concatenateReplies(teamId, channelId, messageId);
+        return this.chatGptService.answerToPromptOfChatGpt(question);
+    }
+    public String summarizeByMessageLink(String messageLink) throws JsonProcessingException {
+        String []messagePartsByAnd= messageLink.split("&");
+        String teamId=messagePartsByAnd[1].substring(8);
+        String messageId=messagePartsByAnd[2].substring(16);
+        String []messagePartsBySlash= messageLink.split("/");
+        String channelId=messagePartsBySlash[5];
+        return summarizeReplies(teamId,channelId,messageId);
     }
 
 }
