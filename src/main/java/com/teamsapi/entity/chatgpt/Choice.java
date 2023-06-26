@@ -9,6 +9,9 @@ public class Choice {
     public Choice(String text) {
         this.text = text;
     }
+    public Choice(){
+
+    }
 
     public String getText() {
         return text;

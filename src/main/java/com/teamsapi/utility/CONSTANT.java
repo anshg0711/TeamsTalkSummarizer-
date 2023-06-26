@@ -17,7 +17,7 @@ public class CONSTANT {
     public static final String SPACE = " ";
     public static final String COLON = ":";
     public static final String DOT = ".";
-    public static final String SUMMARIZE = "Summarize the following chats in one paragraph: ";
+    public static final String SUMMARIZE = "Summarize the following chats: ";
     public static final String FIFTY = "50";
 
     public static final String ALLCHANNELS = "/allChannels";

@@ -45,8 +45,6 @@ public class TeamsService {
 
 
     private String responseDataReceived(String url) {
-
-
         headers.set(CONSTANT.AUTHORIZATION, CONSTANT.BEARER+CONSTANT.SPACE + token);
         HttpEntity<String> entity = new HttpEntity<>(headers);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);

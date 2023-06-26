@@ -13,7 +13,9 @@ public class Channel {
         this.channelId = channelId;
         this.channelName = channelName;
     }
+    public Channel(){
 
+    }
 
     public String getChannelId() {
         return channelId;
