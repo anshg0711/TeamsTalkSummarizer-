@@ -10,7 +10,6 @@ public class Choice {
         this.text = text;
     }
     public Choice(){
-
     }
 
     public String getText() {

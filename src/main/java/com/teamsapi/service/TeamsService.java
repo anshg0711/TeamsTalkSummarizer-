@@ -19,11 +19,18 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class TeamsService {
@@ -42,14 +49,14 @@ public class TeamsService {
         this.token = token;
     }
 
-    public List<Message> messagesInChannel(String teamId, String channelId, String top) throws JsonProcessingException {
+    public List<Message> messagesInChannel(String teamId, String channelId, String top) {
         String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGESTOP + top;
         String response = responseDataReceived(url);
         MessageResponseBase messages = mappingResponseWithMessageResponseBase(response);
         return mappingMessageResponseBaseWithMessage(messages);
     }
 
-    public List<Message> repliesOnMessage(String teamId, String channelId, String messageId, String top) throws JsonProcessingException {
+    public List<Message> repliesOnMessage(String teamId, String channelId, String messageId, String top) {
         String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId + CONSTANT.REPLIESTOP + top;
         String response = responseDataReceived(url);
         MessageResponseBase messages = mappingResponseWithMessageResponseBase(response);
@@ -58,38 +65,65 @@ public class TeamsService {
         return messageData;
     }
 
+    public Message getMessageById(String teamId, String channelId, String messageId) {
 
-    public Message getMessageById(String teamId, String channelId, String messageId) throws JsonProcessingException {
         String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId;
         String response = responseDataReceived(url);
         Vall vall = mappingResponseWithVall(response);
         return mappingVallWithMessage(vall);
     }
 
-    public List<Channel> channelNames(String teamId) throws JsonProcessingException {
+    public List<Channel> channelNames(String teamId) {
         String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.ALLCHANNELS;
         String response = responseDataReceived(url);
         ChannelResponseBase channel = mappingResponseWithChannelResponseBase(response);
         return mappingChannelResponseBaseWithChannel(channel);
     }
 
+    public String summarizeByMessageLink(String messageLink) {
+        if (!messageLink.startsWith("http://") && !messageLink.startsWith("https://")) {
+            throw new IllegalArgumentException("Invalid link: " + messageLink + ". Link should start with 'http://' or 'https://'.");
+        }
+        try {
+            URL url = new URL(messageLink);
+            String query = url.getQuery();
+            String teamId = null;
+            String channelId = null;
+            String messageId = null;
+            String[] params = query.split(CONSTANT.AND);
+            for (String param : params) {
+                String[] keyValue = param.split(CONSTANT.EQUAL);
+                if (keyValue.length == 2) {
+                    String key = keyValue[0];
+                    String value = keyValue[1];
 
-    public String summarizeByMessageLink(String messageLink) throws JsonProcessingException {
-        String[] messagePartsByAnd = messageLink.split("&");
-        String teamId = messagePartsByAnd[1].substring(8);
-        String messageId = messagePartsByAnd[2].substring(16);
-        String[] messagePartsBySlash = messageLink.split("/");
-        String channelId = messagePartsBySlash[5];
-        return summarizeReplies(teamId, channelId, messageId);
+                    if (key.equals("groupId")) {
+                        teamId = value;
+                    } else if (key.equals("parentMessageId")) {
+                        messageId = value;
+                    }
+                }
+            }
+            String path = url.getPath();
+            Pattern pattern = Pattern.compile("/([A-Za-z0-9@:]+@thread\\.tacv2)/");
+            Matcher matcher = pattern.matcher(path);
+            if (matcher.find()) {
+                channelId = matcher.group(1);
+            }
+
+            return summarizeReplies(teamId, channelId, messageId);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Invalid link: " + messageLink, e);
+        }
+
     }
 
-    public String summarizeReplies(String teamId, String channelId, String messageId) throws JsonProcessingException {
+    public String summarizeReplies(String teamId, String channelId, String messageId) {
         String question = concatenateReplies(teamId, channelId, messageId);
         return this.chatGptService.answerToPromptOfChatGpt(question);
     }
 
-
-    private String concatenateReplies(String teamId, String channelId, String messageId) throws JsonProcessingException {
+    private String concatenateReplies(String teamId, String channelId, String messageId) {
         StringBuilder questionBuilder = new StringBuilder(CONSTANT.SUMMARIZE);
         Message message = getMessageById(teamId, channelId, messageId);
         List<Message> messages = new ArrayList<>();
@@ -120,10 +154,14 @@ public class TeamsService {
         return new Message(messageId, name, text);
     }
 
-    private Vall mappingResponseWithVall(String response) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return objectMapper.readValue(response, Vall.class);
+    private Vall mappingResponseWithVall(String response) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            return objectMapper.readValue(response, Vall.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Method mappingResponseWithVall in class TeamsService, Failed to deserialize JSON response: " + e.getMessage(), e);
+        }
     }
 
     private List<Channel> mappingChannelResponseBaseWithChannel(ChannelResponseBase channel) {
@@ -139,12 +177,15 @@ public class TeamsService {
         return channelNames;
     }
 
-    private ChannelResponseBase mappingResponseWithChannelResponseBase(String response) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return objectMapper.readValue(response, ChannelResponseBase.class);
+    private ChannelResponseBase mappingResponseWithChannelResponseBase(String response) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            return objectMapper.readValue(response, ChannelResponseBase.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Method mappingResponseWithChannelResponseBase in class TeamsService, Failed to deserialize JSON response: " + e.getMessage(), e);
+        }
     }
-
 
     private List<Message> mappingMessageResponseBaseWithMessage(MessageResponseBase messages) {
         Vall[] messageValues = messages.getValue();
@@ -155,18 +196,31 @@ public class TeamsService {
         return allMessages;
     }
 
-    private MessageResponseBase mappingResponseWithMessageResponseBase(String response) throws JsonProcessingException {
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return objectMapper.readValue(response, MessageResponseBase.class);
+    private MessageResponseBase mappingResponseWithMessageResponseBase(String response) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            return objectMapper.readValue(response, MessageResponseBase.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Method mappingResponseWithMessageResponseBase in class TeamsService, Failed to deserialize JSON response: " + e.getMessage(), e);
+        }
     }
 
     private String responseDataReceived(String url) {
-        headers.set(CONSTANT.AUTHORIZATION, CONSTANT.BEARER + CONSTANT.SPACE + token);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
-        return response.getBody();
+        try {
+            headers.set(CONSTANT.AUTHORIZATION, CONSTANT.BEARER + CONSTANT.SPACE + token);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            return response.getBody();
+        } catch (HttpClientErrorException.Gone e) {
+            throw new IllegalArgumentException("The requested resource is no longer available: " + e.getMessage(), e);
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new IllegalArgumentException("Failed to make HTTP request: " + e.getMessage(), e);
+        } catch (RestClientException e) {
+            throw new IllegalArgumentException("Invalid URL or network error: " + e.getMessage(), e);
+        }
     }
+
+
 
 }

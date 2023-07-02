@@ -4,14 +4,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ChatGptResponseBase {
     @JsonProperty("choices")
-    private Choice[] choice;
+    private Choice[] choices;
 
     public void setChoice(Choice[] choice) {
-        this.choice = choice;
+        this.choices = choice;
     }
 
     public Choice[] getChoice() {
-        return choice;
+        return choices;
     }
 
 

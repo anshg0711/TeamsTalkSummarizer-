@@ -32,10 +32,14 @@ public class ChatGptService {
         return responseEntity.getBody();
     }
 
-    private ChatGptResponseBase mappingResponseWithChatGptResponseBase(String response) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return objectMapper.readValue(response, ChatGptResponseBase.class);
+    private ChatGptResponseBase mappingResponseWithChatGptResponseBase(String response){
+        try {
+            ObjectMapper objectMapper= new ObjectMapper();
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            return objectMapper.readValue(response, ChatGptResponseBase.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Method mappingResponseWithChatGptResponseBase in class ChatGptService, Failed to deserialize JSON response: " + e.getMessage(), e);
+        }
     }
 
     private String extractingTextFromChatGptResponseBase(ChatGptResponseBase chatGptResponseBase) {
@@ -43,7 +47,7 @@ public class ChatGptService {
         return HtmlToTextConverter.convertHtmlToText(chatGptResponseBase.getChoice()[0].getText());
     }
 
-    public String answerToPromptOfChatGpt(String question) throws JsonProcessingException {
+    public String answerToPromptOfChatGpt(String question){
         String response = responseDataReceived(question);
         ChatGptResponseBase chatGptResponseBase = mappingResponseWithChatGptResponseBase((response));
         return extractingTextFromChatGptResponseBase(chatGptResponseBase);

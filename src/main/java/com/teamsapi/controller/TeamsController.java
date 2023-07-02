@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.MalformedURLException;
 import java.util.List;
 
 @RestController
@@ -46,6 +47,5 @@ public class TeamsController {
     public String summarizeMessageLink(@RequestParam String messageLink) throws JsonProcessingException {
         return this.teamService.summarizeByMessageLink(messageLink);
     }
-
 
 }

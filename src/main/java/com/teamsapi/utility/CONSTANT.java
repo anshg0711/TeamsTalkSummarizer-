@@ -27,6 +27,10 @@ public class CONSTANT {
     public static final String ANONYMOUS="anonymous";
 
     public static final String CHATGPT_ENDPOINT = "https://api.openai.com/v1/completions";
+
+    public static final String EQUAL="=";
+
+    public static final String AND="&";
     public static final String CHATGPTREQUESTBODY="""
                 {
                   "model": "text-davinci-003","prompt": "Hi","temperature": 1,"max_tokens": 256,"top_p": 1,"frequency_penalty": 0,"presence_penalty": 0
