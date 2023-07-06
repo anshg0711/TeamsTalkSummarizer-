@@ -43,7 +43,6 @@ public class ChatGptService {
     }
 
     private String extractingTextFromChatGptResponseBase(ChatGptResponseBase chatGptResponseBase) {
-
         return HtmlToTextConverter.convertHtmlToText(chatGptResponseBase.getChoice()[0].getText());
     }
 

@@ -1,5 +1,4 @@
 package com.teamsapi.service;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
