@@ -4,16 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamsapi.entity.teamsapi.Channel;
 import com.teamsapi.entity.teamsapi.channelresponse.ChannelResponseBase;
-import com.teamsapi.entity.teamsapi.channelresponse.Val;
 import com.teamsapi.entity.teamsapi.Message;
 import com.teamsapi.entity.teamsapi.messageresponse.MessageResponseBase;
-import com.teamsapi.entity.teamsapi.messageresponse.Vall;
-import com.teamsapi.respository.TeamsChannelRepository;
-import com.teamsapi.respository.TeamsMessageRepository;
+import com.teamsapi.entity.teamsapi.messageresponse.Value;
 import com.teamsapi.utility.CONSTANT;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -23,118 +18,72 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 public class TeamsService {
-    private final TeamsMessageRepository teamsMessageRepository;
-    private final TeamsChannelRepository teamsChannelRepository;
     private final ChatGptService chatGptService;
     private final String token;
     private final RestTemplate restTemplate;
-    private final HttpHeaders headers ;
-
+    private final HttpHeaders headers;
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public TeamsService(TeamsMessageRepository teamsMessageRepository, TeamsChannelRepository teamsChannelRepository, ChatGptService chatGptService, @Value("${team.bearer.token}") String token, ObjectMapper objectMapper,RestTemplate restTemplate, HttpHeaders headers ) {
-        this.teamsMessageRepository = teamsMessageRepository;
-        this.teamsChannelRepository = teamsChannelRepository;
+    public TeamsService(ChatGptService chatGptService, @org.springframework.beans.factory.annotation.Value("${team.bearer.token}") String token, ObjectMapper objectMapper, RestTemplate restTemplate, HttpHeaders headers) {
+
         this.chatGptService = chatGptService;
         this.token = token;
         this.objectMapper = objectMapper;
-        this.restTemplate=restTemplate;
-        this.headers=headers;
+        this.restTemplate = restTemplate;
+        this.headers = headers;
     }
 
 
-    public List<Message> messagesInChannel(String teamId, String channelId, String top) {
-        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGESTOP + top;
+    public List<Message> getMessagesInChannel(String teamId, String channelId, String top) {
+        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES_TOP + top;
 
         String response = responseDataReceived(url);
-        MessageResponseBase messages = mappingResponseWithMessageResponseBase(response);
-        return mappingMessageResponseBaseWithMessage(messages);
+        MessageResponseBase messages = mapResponseToMessageResponseBase(response);
+        return mapMessageResponseToMessages(messages);
     }
 
-    public List<Message> repliesOnMessage(String teamId, String channelId, String messageId, String top) {
-        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId + CONSTANT.REPLIESTOP + top;
+    public List<Message> getRepliesOnMessage(String teamId, String channelId, String messageId) {
+        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId+ CONSTANT.REPLIES;
         String response = responseDataReceived(url);
-        MessageResponseBase messages = mappingResponseWithMessageResponseBase(response);
-        List<Message> messageData = mappingMessageResponseBaseWithMessage(messages);
+        MessageResponseBase messages = mapResponseToMessageResponseBase(response);
+        List<Message> messageData = mapMessageResponseToMessages(messages);
         Collections.reverse(messageData);
         return messageData;
     }
-    public Message getMessageById(String teamId, String channelId, String messageId) {
+
+    public Message getMessageByIdentifier(String teamId, String channelId, String messageId) {
 
         String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId;
         String response = responseDataReceived(url);
-        Vall vall = mappingResponseWithVall(response);
-        return mappingVallWithMessage(vall);
+        Value value = mapResponseToValue(response);
+        return mapValueToMessage(value);
     }
 
-    public List<Channel> channelNames(String teamId) {
+    public List<Channel> getAllChannels(String teamId) {
         String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.ALLCHANNELS;
         String response = responseDataReceived(url);
-        ChannelResponseBase channel = mappingResponseWithChannelResponseBase(response);
-        return mappingChannelResponseBaseWithChannel(channel);
+        ChannelResponseBase channel = mapResponseToChannelResponseBase(response);
+        return mapChannelResponseToChannels(channel);
     }
 
-    public String summarizeByMessageLink(String messageLink) {
-        if (!messageLink.startsWith("http://") && !messageLink.startsWith("https://")) {
-            throw new IllegalArgumentException("Invalid link: " + messageLink + ". Link should start with 'http://' or 'https://'.");
-        }
-        try {
-            URL url = new URL(messageLink);
-            String query = url.getQuery();
-            String teamId = null;
-            String channelId = null;
-            String messageId = null;
-            String[] params = query.split(CONSTANT.AND);
-            for (String param : params) {
-                String[] keyValue = param.split(CONSTANT.EQUAL);
-                if (keyValue.length == 2) {
-                    String key = keyValue[0];
-                    String value = keyValue[1];
-                    if (key.equals("groupId")) {
-                        teamId = value;
-                    } else if (key.equals("parentMessageId")) {
-                        messageId = value;
-                    }
-                }
-            }
-            String path = url.getPath();
-            Pattern pattern = Pattern.compile("/([A-Za-z0-9@:]+@thread\\.tacv2)/");
-            Matcher matcher = pattern.matcher(path);
-            if (matcher.find()) {
-                channelId = matcher.group(1);
-            }
-
-            return summarizeReplies(teamId, channelId, messageId);
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("Invalid link: " + messageLink, e);
-        }
-
+    public String summarizeRepliesForMessage(String teamId, String channelId, String messageId) {
+        String question = buildQuestionFromReplies(teamId, channelId, messageId);
+        return this.chatGptService.getAnswerToChatGptPrompt(question);
     }
 
-    public String summarizeReplies(String teamId, String channelId, String messageId) {
-        String question = concatenateReplies(teamId, channelId, messageId);
-        return this.chatGptService.answerToPromptOfChatGpt(question);
-    }
-
-    private String concatenateReplies(String teamId, String channelId, String messageId) {
+    private String buildQuestionFromReplies(String teamId, String channelId, String messageId) {
         StringBuilder questionBuilder = new StringBuilder(CONSTANT.SUMMARIZE);
-        Message message = getMessageById(teamId, channelId, messageId);
+        Message message = getMessageByIdentifier(teamId, channelId, messageId);
         List<Message> messages = new ArrayList<>();
         messages.add(message);
-        messages.addAll(repliesOnMessage(teamId, channelId, messageId, CONSTANT.FIFTY));
-
+        messages.addAll(getRepliesOnMessage(teamId, channelId, messageId));
         for (Message message1 : messages) {
             String chat = message1.getName() + CONSTANT.SPACE + CONSTANT.COLON + CONSTANT.SPACE + message1.getText() + CONSTANT.DOT;
             questionBuilder.append(chat);
@@ -142,45 +91,45 @@ public class TeamsService {
         return questionBuilder.toString();
     }
 
-    private Message mappingVallWithMessage(Vall vall) {
+    private Message mapValueToMessage(Value value) {
         String messageId = CONSTANT.ANONYMOUS;
         String name = CONSTANT.ANONYMOUS;
         String text = CONSTANT.EMPTY;
-        if (vall != null && vall.getId() != null) {
-            messageId = vall.getId();
+        if (value != null && value.getId() != null) {
+            messageId = value.getId();
         }
-        if (vall != null && vall.getForm() != null && vall.getForm().getUser() != null && vall.getForm().getUser().getDisplayName() != null) {
-            name = vall.getForm().getUser().getDisplayName();
+        if (value != null && value.getForm() != null && value.getForm().getUser() != null && value.getForm().getUser().getDisplayName() != null) {
+            name = value.getForm().getUser().getDisplayName();
         }
-        if (vall != null && vall.getBody() != null && vall.getBody().getMessage() != null) {
-            text = vall.getBody().getMessage();
+        if (value != null && value.getBody() != null && value.getBody().getMessage() != null) {
+            text = value.getBody().getMessage();
         }
         text = HtmlToTextConverter.convertHtmlToText(text);
         return new Message(messageId, name, text);
     }
 
-    private Vall mappingResponseWithVall(String response) {
+    private Value mapResponseToValue(String response) {
         try {
-            return objectMapper.readValue(response, Vall.class);
+            return objectMapper.readValue(response, Value.class);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Method mappingResponseWithVall in class TeamsService, Failed to deserialize JSON response: " + e.getMessage(), e);
         }
     }
 
-    private List<Channel> mappingChannelResponseBaseWithChannel(ChannelResponseBase channel) {
-        Val[] check = channel.getVal();
+    private List<Channel> mapChannelResponseToChannels(ChannelResponseBase channel) {
+        com.teamsapi.entity.teamsapi.channelresponse.Value[] check = channel.getVal();
         List<Channel> channelNames = new ArrayList<>();
-        for (Val val : check) {
+        for (com.teamsapi.entity.teamsapi.channelresponse.Value value : check) {
             String channelId = CONSTANT.EMPTY;
             String channelName = CONSTANT.EMPTY;
-            if (val != null && val.getChannelId() != null) channelId = val.getChannelId();
-            if (val != null && val.getChannelName() != null) channelName = val.getChannelName();
+            if (value != null && value.getId() != null) channelId = value.getId();
+            if (value != null && value.getDisplayName() != null) channelName = value.getDisplayName();
             channelNames.add(new Channel(channelId, channelName));
         }
         return channelNames;
     }
 
-    private ChannelResponseBase mappingResponseWithChannelResponseBase(String response) {
+    private ChannelResponseBase mapResponseToChannelResponseBase(String response) {
         try {
             return objectMapper.readValue(response, ChannelResponseBase.class);
         } catch (JsonProcessingException e) {
@@ -188,22 +137,24 @@ public class TeamsService {
         }
     }
 
-    private List<Message> mappingMessageResponseBaseWithMessage(MessageResponseBase messages) {
-        Vall[] messageValues = messages.getValue();
+    private List<Message> mapMessageResponseToMessages(MessageResponseBase messages) {
+        Value[] messageValues = messages.getValue();
         List<Message> allMessages = new ArrayList<>();
-        for (Vall vall : messageValues) {
-            allMessages.add(mappingVallWithMessage(vall));
+        for (Value value : messageValues) {
+            allMessages.add(mapValueToMessage(value));
         }
         return allMessages;
     }
 
-    private MessageResponseBase mappingResponseWithMessageResponseBase(String response) {
+    private MessageResponseBase mapResponseToMessageResponseBase(String response) {
         try {
             return objectMapper.readValue(response, MessageResponseBase.class);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Method mappingResponseWithMessageResponseBase in class TeamsService, Failed to deserialize JSON response: " + e.getMessage(), e);
         }
     }
+
+
     private String responseDataReceived(String url) {
         try {
             headers.set(CONSTANT.AUTHORIZATION, CONSTANT.BEARER + CONSTANT.SPACE + token);
@@ -218,6 +169,5 @@ public class TeamsService {
             throw new IllegalArgumentException("Invalid URL or network error: " + e.getMessage(), e);
         }
     }
-
 
 }

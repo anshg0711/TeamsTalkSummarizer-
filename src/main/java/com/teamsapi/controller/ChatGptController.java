@@ -7,9 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/chat")
-
 public class ChatGptController {
     @Autowired
     ChatGptService chatGptService;
-
 }

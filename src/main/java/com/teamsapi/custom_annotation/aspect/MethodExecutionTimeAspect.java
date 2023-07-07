@@ -8,7 +8,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Method;
 
 @Aspect
@@ -31,8 +30,6 @@ public class MethodExecutionTimeAspect {
         } else {
             logger.info("Method {} took {} milliseconds to execute.", joinPoint.getSignature().toShortString(), executionTime);
         }
-
-
         return result;
     }
 }

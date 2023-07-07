@@ -15,41 +15,46 @@ import org.springframework.web.client.RestTemplate;
 public class ChatGptService {
     private final String token;
 
+    private final HttpHeaders headers;
+    private final ObjectMapper objectMapper;
+    private final RestTemplate restTemplate;
+
     @Autowired
-    public ChatGptService(@Value("${chatGpt.bearer.token}") String token) {
+    public ChatGptService(@Value("${chatGpt.bearer.token}") String token, ObjectMapper objectMapper, RestTemplate restTemplate, HttpHeaders headers) {
         this.token = token;
+        this.objectMapper = objectMapper;
+        this.headers = headers;
+        this.restTemplate=restTemplate;
+
     }
 
-    private String responseDataReceived(String question) {
-        HttpHeaders headers = new HttpHeaders();
+    private String sendChatGptRequest(String question) {
+
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set(CONSTANT.AUTHORIZATION, CONSTANT.BEARER + CONSTANT.SPACE + token);
         String requestBody = CONSTANT.CHATGPTREQUESTBODY;
         requestBody = requestBody.replace(CONSTANT.HI, question);
         HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
-        RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> responseEntity = restTemplate.exchange(CONSTANT.CHATGPT_ENDPOINT, HttpMethod.POST, requestEntity, String.class);
         return responseEntity.getBody();
     }
 
-    private ChatGptResponseBase mappingResponseWithChatGptResponseBase(String response){
+    private ChatGptResponseBase mapResponseToChatGptResponseBase(String response) {
         try {
-            ObjectMapper objectMapper= new ObjectMapper();
-            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             return objectMapper.readValue(response, ChatGptResponseBase.class);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Method mappingResponseWithChatGptResponseBase in class ChatGptService, Failed to deserialize JSON response: " + e.getMessage(), e);
         }
     }
 
-    private String extractingTextFromChatGptResponseBase(ChatGptResponseBase chatGptResponseBase) {
+    private String extractTextFromChatGptResponse(ChatGptResponseBase chatGptResponseBase) {
         return HtmlToTextConverter.convertHtmlToText(chatGptResponseBase.getChoice()[0].getText());
     }
 
-    public String answerToPromptOfChatGpt(String question){
-        String response = responseDataReceived(question);
-        ChatGptResponseBase chatGptResponseBase = mappingResponseWithChatGptResponseBase((response));
-        return extractingTextFromChatGptResponseBase(chatGptResponseBase);
+    public String getAnswerToChatGptPrompt(String question) {
+        String response = sendChatGptRequest(question);
+        ChatGptResponseBase chatGptResponseBase = mapResponseToChatGptResponseBase((response));
+        return extractTextFromChatGptResponse(chatGptResponseBase);
     }
 
 }

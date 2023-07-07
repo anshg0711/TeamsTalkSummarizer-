@@ -6,9 +6,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class MessageResponseBase {
 
     @JsonProperty("value")
-    private Vall value[];
+    private Value value[];
 
-    public MessageResponseBase(Vall[] value) {
+    public MessageResponseBase(Value[] value) {
 
         this.value = value;
     }
@@ -16,12 +16,12 @@ public class MessageResponseBase {
 
     }
 
-    public void setValue(Vall[] value) {
+    public void setValue(Value[] value) {
         this.value = value;
     }
 
 
-    public Vall[] getValue() {
+    public Value[] getValue() {
         return value;
     }
 

@@ -4,22 +4,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ChannelResponseBase {
     @JsonProperty("value")
-    private Val[] val;
+    private Value[] value;
 
-    public ChannelResponseBase(Val[] val) {
-        this.val = val;
+
+    public ChannelResponseBase(Value[] value) {
+        this.value = value;
     }
 
     public ChannelResponseBase() {
 
     }
 
-    public Val[] getVal() {
-        return val;
+    public Value[] getVal() {
+        return value;
     }
 
-    public void setVal(Val[] val) {
-        this.val = val;
+    public void setVal(Value[] value) {
+        this.value = value;
     }
 
 

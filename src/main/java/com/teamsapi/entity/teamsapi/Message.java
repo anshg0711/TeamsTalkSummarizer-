@@ -1,9 +1,5 @@
 package com.teamsapi.entity.teamsapi;
 
-
-import org.springframework.data.mongodb.core.mapping.Document;
-
-@Document("messages")
 public class Message {
     private String messageId;
     private String name;

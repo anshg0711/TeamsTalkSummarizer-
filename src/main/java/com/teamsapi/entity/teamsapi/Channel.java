@@ -1,10 +1,5 @@
 package com.teamsapi.entity.teamsapi;
 
-
-import org.springframework.data.mongodb.core.mapping.Document;
-
-@Document("channel")
-
 public class Channel {
     private String channelId;
     private String channelName;

@@ -2,7 +2,7 @@ package com.teamsapi.entity.teamsapi.messageresponse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Vall {
+public class Value {
     @JsonProperty("id")
     private String id;
 
@@ -12,13 +12,13 @@ public class Vall {
     @JsonProperty("body")
     private Body body;
 
-    public Vall(String id, Form form, Body body) {
+    public Value(String id, Form form, Body body) {
         this.id = id;
         this.form = form;
         this.body = body;
     }
 
-    public Vall() {
+    public Value() {
 
     }
 
