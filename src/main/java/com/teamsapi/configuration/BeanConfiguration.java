@@ -29,5 +29,5 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public ExecutorService executorService(){return new ThreadPoolExecutor(2, 3, 100L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(1)); }
+    public ExecutorService executorService(){return new ThreadPoolExecutor(10, 100, 100L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(1)); }
 }
