@@ -3,8 +3,8 @@ package com.teamsapi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamsapi.entity.teamsapi.Channel;
-import com.teamsapi.entity.teamsapi.channelresponse.ChannelResponseBase;
 import com.teamsapi.entity.teamsapi.Message;
+import com.teamsapi.entity.teamsapi.channelresponse.ChannelResponseBase;
 import com.teamsapi.entity.teamsapi.messageresponse.MessageResponseBase;
 import com.teamsapi.entity.teamsapi.messageresponse.Value;
 import com.teamsapi.utility.CONSTANT;
@@ -18,6 +18,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,32 +27,25 @@ import java.util.List;
 public class TeamsService {
     private final ChatGptService chatGptService;
     private final String token;
-    private final RestTemplate restTemplate;
-    private final HttpHeaders headers;
-    private final ObjectMapper objectMapper;
-
+    private final RestTemplate restTemplate=CONSTANT.restTemplate();
+    private final HttpHeaders headers= CONSTANT.httpHeaders();
+    private final ObjectMapper objectMapper= CONSTANT.objectMapper();
     @Autowired
-    public TeamsService(ChatGptService chatGptService, @org.springframework.beans.factory.annotation.Value("${team.bearer.token}") String token, ObjectMapper objectMapper, RestTemplate restTemplate, HttpHeaders headers) {
+    public TeamsService(ChatGptService chatGptService, @org.springframework.beans.factory.annotation.Value("${team.bearer.token}") String token) {
 
         this.chatGptService = chatGptService;
         this.token = token;
-        this.objectMapper = objectMapper;
-        this.restTemplate = restTemplate;
-        this.headers = headers;
     }
-
-
     public List<Message> getMessagesInChannel(String teamId, String channelId, String top) {
         String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES_TOP + top;
-
-        String response = responseDataReceived(url);
+        String response = getResponse(url);
         MessageResponseBase messages = mapResponseToMessageResponseBase(response);
         return mapMessageResponseToMessages(messages);
     }
 
     public List<Message> getRepliesOnMessage(String teamId, String channelId, String messageId) {
         String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId+ CONSTANT.REPLIES;
-        String response = responseDataReceived(url);
+        String response = getResponse(url);
         MessageResponseBase messages = mapResponseToMessageResponseBase(response);
         List<Message> messageData = mapMessageResponseToMessages(messages);
         Collections.reverse(messageData);
@@ -59,16 +53,15 @@ public class TeamsService {
     }
 
     public Message getMessageByIdentifier(String teamId, String channelId, String messageId) {
-
         String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId;
-        String response = responseDataReceived(url);
+        String response = getResponse(url);
         Value value = mapResponseToValue(response);
         return mapValueToMessage(value);
     }
 
     public List<Channel> getAllChannels(String teamId) {
-        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.ALLCHANNELS;
-        String response = responseDataReceived(url);
+        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.ALL_CHANNELS;
+        String response = getResponse(url);
         ChannelResponseBase channel = mapResponseToChannelResponseBase(response);
         return mapChannelResponseToChannels(channel);
     }
@@ -112,7 +105,7 @@ public class TeamsService {
         try {
             return objectMapper.readValue(response, Value.class);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Method mappingResponseWithVall in class TeamsService, Failed to deserialize JSON response: " + e.getMessage(), e);
+            throw new IllegalArgumentException("Method mappingResponseWithValue in class TeamsService, Failed to deserialize JSON response: " + e.getMessage(), e);
         }
     }
 
@@ -154,8 +147,7 @@ public class TeamsService {
         }
     }
 
-
-    private String responseDataReceived(String url) {
+    private String getResponse(String url) {
         try {
             headers.set(CONSTANT.AUTHORIZATION, CONSTANT.BEARER + CONSTANT.SPACE + token);
             HttpEntity<String> entity = new HttpEntity<>(headers);
@@ -169,5 +161,4 @@ public class TeamsService {
             throw new IllegalArgumentException("Invalid URL or network error: " + e.getMessage(), e);
         }
     }
-
 }

@@ -1,7 +1,6 @@
 package com.teamsapi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamsapi.entity.chatgpt.ChatGptResponseBase;
 import com.teamsapi.utility.CONSTANT;
@@ -14,25 +13,19 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class ChatGptService {
     private final String token;
-
-    private final HttpHeaders headers;
-    private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate;
+    private final HttpHeaders headers=CONSTANT.httpHeaders();
+    private final ObjectMapper objectMapper= CONSTANT.objectMapper();
+    private final RestTemplate restTemplate=CONSTANT.restTemplate();
 
     @Autowired
-    public ChatGptService(@Value("${chatGpt.bearer.token}") String token, ObjectMapper objectMapper, RestTemplate restTemplate, HttpHeaders headers) {
+    public ChatGptService(@Value("${chatGpt.bearer.token}") String token) {
         this.token = token;
-        this.objectMapper = objectMapper;
-        this.headers = headers;
-        this.restTemplate=restTemplate;
-
     }
 
     private String sendChatGptRequest(String question) {
-
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set(CONSTANT.AUTHORIZATION, CONSTANT.BEARER + CONSTANT.SPACE + token);
-        String requestBody = CONSTANT.CHATGPTREQUESTBODY;
+        String requestBody = CONSTANT.CHATGPT_REQUEST_BODY;
         requestBody = requestBody.replace(CONSTANT.HI, question);
         HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
         ResponseEntity<String> responseEntity = restTemplate.exchange(CONSTANT.CHATGPT_ENDPOINT, HttpMethod.POST, requestEntity, String.class);
