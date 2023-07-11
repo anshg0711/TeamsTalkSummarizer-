@@ -27,15 +27,19 @@ import java.util.List;
 public class TeamsService {
     private final ChatGptService chatGptService;
     private final String token;
-    private final RestTemplate restTemplate=CONSTANT.restTemplate();
-    private final HttpHeaders headers= CONSTANT.httpHeaders();
-    private final ObjectMapper objectMapper= CONSTANT.objectMapper();
+    private final RestTemplate restTemplate = CONSTANT.restTemplate();
+    private final HttpHeaders headers = CONSTANT.httpHeaders();
+    private final ObjectMapper objectMapper = CONSTANT.objectMapper();
+
+    private final HtmlToTextConverter htmlToTextConverter;
     @Autowired
-    public TeamsService(ChatGptService chatGptService, @org.springframework.beans.factory.annotation.Value("${team.bearer.token}") String token) {
+    public TeamsService(ChatGptService chatGptService, @org.springframework.beans.factory.annotation.Value("${team.bearer.token}") String token, HtmlToTextConverter htmlToTextConverter) {
 
         this.chatGptService = chatGptService;
         this.token = token;
+        this.htmlToTextConverter = htmlToTextConverter;
     }
+
     public List<Message> getMessagesInChannel(String teamId, String channelId, String top) {
         String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES_TOP + top;
         String response = getResponse(url);
@@ -44,14 +48,13 @@ public class TeamsService {
     }
 
     public List<Message> getRepliesOnMessage(String teamId, String channelId, String messageId) {
-        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId+ CONSTANT.REPLIES;
+        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId + CONSTANT.REPLIES;
         String response = getResponse(url);
         MessageResponseBase messages = mapResponseToMessageResponseBase(response);
         List<Message> messageData = mapMessageResponseToMessages(messages);
         Collections.reverse(messageData);
         return messageData;
     }
-
     public Message getMessageByIdentifier(String teamId, String channelId, String messageId) {
         String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId;
         String response = getResponse(url);
@@ -83,7 +86,6 @@ public class TeamsService {
         }
         return questionBuilder.toString();
     }
-
     private Message mapValueToMessage(Value value) {
         String messageId = CONSTANT.ANONYMOUS;
         String name = CONSTANT.ANONYMOUS;
@@ -97,7 +99,7 @@ public class TeamsService {
         if (value != null && value.getBody() != null && value.getBody().getMessage() != null) {
             text = value.getBody().getMessage();
         }
-        text = HtmlToTextConverter.convertHtmlToText(text);
+        text = htmlToTextConverter.convertHtmlToText(text);
         return new Message(messageId, name, text);
     }
 

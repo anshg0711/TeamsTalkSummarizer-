@@ -16,10 +16,13 @@ public class ChatGptService {
     private final HttpHeaders headers=CONSTANT.httpHeaders();
     private final ObjectMapper objectMapper= CONSTANT.objectMapper();
     private final RestTemplate restTemplate=CONSTANT.restTemplate();
+    
+    private final HtmlToTextConverter htmlToTextConverter;
 
     @Autowired
-    public ChatGptService(@Value("${chatGpt.bearer.token}") String token) {
+    public ChatGptService(@Value("${chatGpt.bearer.token}") String token, HtmlToTextConverter htmlToTextConverter) {
         this.token = token;
+        this.htmlToTextConverter = htmlToTextConverter;
     }
 
     private String sendChatGptRequest(String question) {
@@ -41,9 +44,8 @@ public class ChatGptService {
     }
 
     private String extractTextFromChatGptResponse(ChatGptResponseBase chatGptResponseBase) {
-        return HtmlToTextConverter.convertHtmlToText(chatGptResponseBase.getChoice()[0].getText());
+        return htmlToTextConverter.convertHtmlToText(chatGptResponseBase.getChoice()[0].getText());
     }
-
     public String getAnswerToChatGptPrompt(String question) {
         String response = sendChatGptRequest(question);
         ChatGptResponseBase chatGptResponseBase = mapResponseToChatGptResponseBase((response));

@@ -20,15 +20,15 @@ public class MethodExecutionTimeAspect {
         Object result = joinPoint.proceed();
         long endTime = System.currentTimeMillis();
         long executionTime = endTime - startTime;
-
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         MethodExecutionTime methodExecutionTime = method.getAnnotation(MethodExecutionTime.class);
         int threshold =methodExecutionTime.threshold();
+        String joinPointSignature = joinPoint.getSignature().toShortString();
         if (threshold < executionTime) {
-            logger.warn("\u001B[31mMethod {} took {} milliseconds to execute.\u001B[0m", joinPoint.getSignature().toShortString(), executionTime);
+            logger.warn("\u001B[31mMethod {} took {} milliseconds to execute.\u001B[0m",joinPointSignature , executionTime);
         } else {
-            logger.info("Method {} took {} milliseconds to execute.", joinPoint.getSignature().toShortString(), executionTime);
+            logger.info("Method {} took {} milliseconds to execute.", joinPointSignature, executionTime);
         }
         return result;
     }

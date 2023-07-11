@@ -7,7 +7,11 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface MethodExecutionTime {
-    int threshold() default 10000;
+    int threshold() default 1000;
 
 }
+
+
+
+
 
