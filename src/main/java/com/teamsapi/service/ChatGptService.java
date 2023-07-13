@@ -3,7 +3,7 @@ package com.teamsapi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teamsapi.entity.chatgpt.ChatGptResponseBase;
-import com.teamsapi.utility.CONSTANT;
+import com.teamsapi.utility.utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -13,9 +13,9 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class ChatGptService {
     private final String token;
-    private final HttpHeaders headers=CONSTANT.httpHeaders();
-    private final ObjectMapper objectMapper= CONSTANT.objectMapper();
-    private final RestTemplate restTemplate=CONSTANT.restTemplate();
+    private final HttpHeaders headers= utility.httpHeaders();
+    private final ObjectMapper objectMapper= utility.objectMapper();
+    private final RestTemplate restTemplate= utility.restTemplate();
     
     private final HtmlToTextConverter htmlToTextConverter;
 
@@ -27,11 +27,11 @@ public class ChatGptService {
 
     private String sendChatGptRequest(String question) {
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set(CONSTANT.AUTHORIZATION, CONSTANT.BEARER + CONSTANT.SPACE + token);
-        String requestBody = CONSTANT.CHATGPT_REQUEST_BODY;
-        requestBody = requestBody.replace(CONSTANT.HI, question);
+        headers.set(utility.AUTHORIZATION, utility.BEARER + utility.SPACE + token);
+        String requestBody = utility.CHATGPT_REQUEST_BODY;
+        requestBody = requestBody.replace(utility.HI, question);
         HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
-        ResponseEntity<String> responseEntity = restTemplate.exchange(CONSTANT.CHATGPT_ENDPOINT, HttpMethod.POST, requestEntity, String.class);
+        ResponseEntity<String> responseEntity = restTemplate.exchange(utility.CHATGPT_ENDPOINT, HttpMethod.POST, requestEntity, String.class);
         return responseEntity.getBody();
     }
 

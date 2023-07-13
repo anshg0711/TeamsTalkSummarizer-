@@ -7,7 +7,7 @@ import com.teamsapi.entity.teamsapi.Message;
 import com.teamsapi.entity.teamsapi.channelresponse.ChannelResponseBase;
 import com.teamsapi.entity.teamsapi.messageresponse.MessageResponseBase;
 import com.teamsapi.entity.teamsapi.messageresponse.Value;
-import com.teamsapi.utility.CONSTANT;
+import com.teamsapi.utility.utility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -27,9 +27,9 @@ import java.util.List;
 public class TeamsService {
     private final ChatGptService chatGptService;
     private final String token;
-    private final RestTemplate restTemplate = CONSTANT.restTemplate();
-    private final HttpHeaders headers = CONSTANT.httpHeaders();
-    private final ObjectMapper objectMapper = CONSTANT.objectMapper();
+    private final RestTemplate restTemplate = utility.restTemplate();
+    private final HttpHeaders headers = utility.httpHeaders();
+    private final ObjectMapper objectMapper = utility.objectMapper();
 
     private final HtmlToTextConverter htmlToTextConverter;
     @Autowired
@@ -41,14 +41,14 @@ public class TeamsService {
     }
 
     public List<Message> getMessagesInChannel(String teamId, String channelId, String top) {
-        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES_TOP + top;
+        String url = utility.TEAMS_API_ENDPOINT + teamId + utility.CHANNELS + channelId + utility.MESSAGES_TOP + top;
         String response = getResponse(url);
         MessageResponseBase messages = mapResponseToMessageResponseBase(response);
         return mapMessageResponseToMessages(messages);
     }
 
     public List<Message> getRepliesOnMessage(String teamId, String channelId, String messageId) {
-        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId + CONSTANT.REPLIES;
+        String url = utility.TEAMS_API_ENDPOINT + teamId + utility.CHANNELS + channelId + utility.MESSAGES + messageId + utility.REPLIES;
         String response = getResponse(url);
         MessageResponseBase messages = mapResponseToMessageResponseBase(response);
         List<Message> messageData = mapMessageResponseToMessages(messages);
@@ -56,14 +56,14 @@ public class TeamsService {
         return messageData;
     }
     public Message getMessageByIdentifier(String teamId, String channelId, String messageId) {
-        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.CHANNELS + channelId + CONSTANT.MESSAGES + messageId;
+        String url = utility.TEAMS_API_ENDPOINT + teamId + utility.CHANNELS + channelId + utility.MESSAGES + messageId;
         String response = getResponse(url);
         Value value = mapResponseToValue(response);
         return mapValueToMessage(value);
     }
 
     public List<Channel> getAllChannels(String teamId) {
-        String url = CONSTANT.TEAMS_API_ENDPOINT + teamId + CONSTANT.ALL_CHANNELS;
+        String url = utility.TEAMS_API_ENDPOINT + teamId + utility.ALL_CHANNELS;
         String response = getResponse(url);
         ChannelResponseBase channel = mapResponseToChannelResponseBase(response);
         return mapChannelResponseToChannels(channel);
@@ -75,21 +75,21 @@ public class TeamsService {
     }
 
     private String buildQuestionFromReplies(String teamId, String channelId, String messageId) {
-        StringBuilder questionBuilder = new StringBuilder(CONSTANT.SUMMARIZE);
+        StringBuilder questionBuilder = new StringBuilder(utility.SUMMARIZE);
         Message message = getMessageByIdentifier(teamId, channelId, messageId);
         List<Message> messages = new ArrayList<>();
         messages.add(message);
         messages.addAll(getRepliesOnMessage(teamId, channelId, messageId));
         for (Message message1 : messages) {
-            String chat = message1.getName() + CONSTANT.SPACE + CONSTANT.COLON + CONSTANT.SPACE + message1.getText() + CONSTANT.DOT;
+            String chat = message1.getName() + utility.SPACE + utility.COLON + utility.SPACE + message1.getText() + utility.DOT;
             questionBuilder.append(chat);
         }
         return questionBuilder.toString();
     }
     private Message mapValueToMessage(Value value) {
-        String messageId = CONSTANT.ANONYMOUS;
-        String name = CONSTANT.ANONYMOUS;
-        String text = CONSTANT.EMPTY;
+        String messageId = utility.ANONYMOUS;
+        String name = utility.ANONYMOUS;
+        String text = utility.EMPTY;
         if (value != null && value.getId() != null) {
             messageId = value.getId();
         }
@@ -115,8 +115,8 @@ public class TeamsService {
         com.teamsapi.entity.teamsapi.channelresponse.Value[] check = channel.getVal();
         List<Channel> channelNames = new ArrayList<>();
         for (com.teamsapi.entity.teamsapi.channelresponse.Value value : check) {
-            String channelId = CONSTANT.EMPTY;
-            String channelName = CONSTANT.EMPTY;
+            String channelId = utility.EMPTY;
+            String channelName = utility.EMPTY;
             if (value != null && value.getId() != null) channelId = value.getId();
             if (value != null && value.getDisplayName() != null) channelName = value.getDisplayName();
             channelNames.add(new Channel(channelId, channelName));
@@ -151,7 +151,7 @@ public class TeamsService {
 
     private String getResponse(String url) {
         try {
-            headers.set(CONSTANT.AUTHORIZATION, CONSTANT.BEARER + CONSTANT.SPACE + token);
+            headers.set(utility.AUTHORIZATION, utility.BEARER + utility.SPACE + token);
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             return response.getBody();

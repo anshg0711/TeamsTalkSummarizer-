@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.RestTemplate;
 
-public class CONSTANT {
+public class utility {
 
-    private CONSTANT() {
+    private utility() {
         throw new IllegalStateException("Utility class");
     }
 
@@ -19,7 +19,7 @@ public class CONSTANT {
     public static final String SPACE = " ";
     public static final String COLON = ":";
     public static final String DOT = ".";
-    public static final String SUMMARIZE = "Summarize the following chats: ";
+    public static final String SUMMARIZE = "Summarize the following chat in an shashi tharoor style: ";
     public static final String ALL_CHANNELS = "/allChannels";
     public static final String AUTHORIZATION = "Authorization";
     public static final String BEARER = "Bearer";
@@ -33,8 +33,8 @@ public class CONSTANT {
             """;
     public static final String HI = "Hi";
     private static ObjectMapper objectMapper = null;
-    private static HttpHeaders httpHeaders = null;
-    private static RestTemplate restTemplate = null;
+    private static HttpHeaders httpHeaders =  httpHeaders = new HttpHeaders();
+    private static RestTemplate restTemplate = restTemplate = new RestTemplate();
 
     public static ObjectMapper objectMapper() {
         if (objectMapper == null) {
@@ -44,18 +44,5 @@ public class CONSTANT {
         return objectMapper;
     }
 
-    public static HttpHeaders httpHeaders() {
-        if (httpHeaders == null) {
-            httpHeaders = new HttpHeaders();
-        }
-        return httpHeaders;
-    }
-
-    public static RestTemplate restTemplate() {
-        if (restTemplate == null) {
-            restTemplate = new RestTemplate();
-        }
-        return restTemplate;
-    }
 
 }

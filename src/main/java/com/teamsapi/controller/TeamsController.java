@@ -30,7 +30,7 @@ public class TeamsController {
     }
 
     @GetMapping("/replies")
-    @MethodExecutionTime(threshold = 1)
+    @MethodExecutionTime(threshold = 100)
     public List<Message> getRepliesOnMessage(@RequestParam String teamId, @RequestParam String channelId, @RequestParam String messageId) {
         return teamService.getRepliesOnMessage(teamId, channelId, messageId);
     }

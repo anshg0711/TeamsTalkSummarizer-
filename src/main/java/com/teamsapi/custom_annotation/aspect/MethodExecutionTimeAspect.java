@@ -17,7 +17,7 @@ public class MethodExecutionTimeAspect {
     @Around("@annotation(com.teamsapi.custom_annotation.annotation.MethodExecutionTime)")
     public Object measureExecutionTime(ProceedingJoinPoint joinPoint) throws Throwable {
         long startTime = System.currentTimeMillis();
-        Object result = joinPoint.proceed();
+        Object result= joinPoint.proceed();
         long endTime = System.currentTimeMillis();
         long executionTime = endTime - startTime;
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
@@ -26,9 +26,9 @@ public class MethodExecutionTimeAspect {
         int threshold =methodExecutionTime.threshold();
         String joinPointSignature = joinPoint.getSignature().toShortString();
         if (threshold < executionTime) {
-            logger.warn("\u001B[31mMethod {} took {} milliseconds to execute.\u001B[0m",joinPointSignature , executionTime);
+            logger.warn("\u001B[31mMethod {} took {} milliseconds to execute, threshold was {} milliseconds.\u001B[0m",joinPointSignature , executionTime, threshold);
         } else {
-            logger.info("Method {} took {} milliseconds to execute.", joinPointSignature, executionTime);
+            logger.info("Method {} took {} milliseconds to execute, threshold was {} milliseconds.", joinPointSignature, executionTime,  threshold);
         }
         return result;
     }
