@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.RestTemplate;
 
-public class utility {
+public class Utility {
 
-    private utility() {
+    private Utility() {
         throw new IllegalStateException("Utility class");
     }
 
@@ -33,8 +33,8 @@ public class utility {
             """;
     public static final String HI = "Hi";
     private static ObjectMapper objectMapper = null;
-    private static HttpHeaders httpHeaders =  httpHeaders = new HttpHeaders();
-    private static RestTemplate restTemplate = restTemplate = new RestTemplate();
+    public static HttpHeaders httpHeaders =  httpHeaders = new HttpHeaders();
+    public static RestTemplate restTemplate = restTemplate = new RestTemplate();
 
     public static ObjectMapper objectMapper() {
         if (objectMapper == null) {
